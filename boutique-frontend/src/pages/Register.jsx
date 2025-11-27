@@ -1,5 +1,5 @@
     import { useState } from 'react'
-    import { NavLink } from 'react-router-dom'
+    import { NavLink, useNavigate } from 'react-router-dom'
     import useStore from '../store/useStore'
     import toast from 'react-hot-toast'
 
@@ -10,7 +10,9 @@
         password: '',
         confirmPassword: ''
     })
+    const [loading, setLoading] = useState(false)
     const { register } = useStore()
+    const navigate = useNavigate()
 
     function handleChange(e) {
         setFormData({
@@ -23,32 +25,36 @@
         e.preventDefault()
         
         if (formData.password !== formData.confirmPassword) {
-        toast.error('Passwords do not match')
+        toast.error('Пароли не совпадают')
         return
         }
 
-        const result = await register({
-        name: formData.name,
-        email: formData.email,
-        password: formData.password
-        })
+        setLoading(true)
 
+        try {
+        const result = await register(formData.name, formData.email, formData.password)
         if (result.success) {
-        toast.success('Registration successful! Please login.')
+            toast.success('Регистрация прошла успешно! Пожалуйста, войдите в систему.')
+            navigate('/login')
         } else {
-        toast.error(result.error)
+            toast.error(result.error)
+        }
+        } catch (error) {
+        toast.error('Ошибка регистрации')
+        } finally {
+        setLoading(false)
         }
     }
 
     return (
-        <div className="min-h-screen flex items-center justify-center py-12 px-6">
+        <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6">
         <div className="max-w-md w-full">
-            <div className="border border-black p-12">
-            <h2 className="text-2xl font-normal text-center mb-12 tracking-wide">REGISTER</h2>
+            <div className="border border-black p-8 sm:p-12">
+            <h2 className="text-2xl font-normal text-center mb-8 sm:mb-12 tracking-wide">РЕГИСТРАЦИЯ</h2>
             
-            <form className="space-y-8" onSubmit={handleSubmit}>
+            <form className="space-y-6 sm:space-y-8" onSubmit={handleSubmit}>
                 <div>
-                <label className="block text-sm mb-3 tracking-wider uppercase">Full Name</label>
+                <label className="block text-sm mb-3 tracking-wider uppercase">Полное имя</label>
                 <input
                     type="text"
                     name="name"
@@ -74,7 +80,7 @@
                 </div>
 
                 <div>
-                <label className="block text-sm mb-3 tracking-wider uppercase">Password</label>
+                <label className="block text-sm mb-3 tracking-wider uppercase">Пароль</label>
                 <input
                     type="password"
                     name="password"
@@ -87,7 +93,7 @@
                 </div>
 
                 <div>
-                <label className="block text-sm mb-3 tracking-wider uppercase">Confirm Password</label>
+                <label className="block text-sm mb-3 tracking-wider uppercase">Подтвердите пароль</label>
                 <input
                     type="password"
                     name="confirmPassword"
@@ -101,18 +107,19 @@
 
                 <button 
                 type="submit"
-                className="vogue-button w-full py-4 text-sm tracking-widest uppercase"
+                disabled={loading}
+                className="vogue-button w-full py-4 text-sm tracking-widest uppercase disabled:opacity-50"
                 >
-                Register
+                {loading ? 'Создание аккаунта...' : 'Зарегистрироваться'}
                 </button>
 
                 <p className="text-center text-sm tracking-wide">
-                Already have an account?{' '}
+                Уже есть аккаунт?{' '}
                 <NavLink 
                     to="/login" 
                     className="underline hover:no-underline"
                 >
-                    Login here
+                    Войдите здесь
                 </NavLink>
                 </p>
             </form>

@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"name": "boutique-store",
+			"path": "../for_college/boutique-store"
+		},
+		{
+			"name": "backend",
+			"path": "../web-application/backend"
+		}
+	],
+	"settings": {}
+}

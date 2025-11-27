@@ -7,6 +7,11 @@ import Login from './pages/Login.jsx'
 import Register from './pages/Register.jsx'
 import Admin from './pages/Admin.jsx'
 import Orders from './pages/Orders.jsx'
+// Новые страницы
+import Profile from './pages/Profile.jsx'
+import Reviews from './pages/Reviews.jsx'
+import Shops from './pages/Shops.jsx'
+import Goods from './pages/Goods.jsx'
 
 const router = createBrowserRouter([
     {
@@ -15,7 +20,11 @@ const router = createBrowserRouter([
         children: [
         {
             index: true,
-            element: <Home />
+            element: <Home/>
+        },
+        {
+            path: '/goods',
+            element: <Goods/>
         },
         {
             path: 'product/:id',
@@ -40,6 +49,18 @@ const router = createBrowserRouter([
         {
             path: 'admin',
             element: <Admin />
+        },
+        {
+            path: 'profile',
+            element: <Profile />
+        },
+        {
+            path: 'reviews',
+            element: <Reviews />
+        },
+        {
+            path: 'shops',
+            element: <Shops />
         }
         ]
     }

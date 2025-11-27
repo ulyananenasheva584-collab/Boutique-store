@@ -1,5 +1,5 @@
     import { useState } from 'react'
-    import { NavLink } from 'react-router-dom'
+    import { NavLink, useNavigate } from 'react-router-dom'
     import useStore from '../store/useStore'
     import toast from 'react-hot-toast'
 
@@ -8,7 +8,9 @@
         email: '',
         password: ''
     })
+    const [loading, setLoading] = useState(false)
     const { login } = useStore()
+    const navigate = useNavigate()
 
     function handleChange(e) {
         setFormData({
@@ -19,22 +21,30 @@
 
     async function handleSubmit(e) {
         e.preventDefault()
+        setLoading(true)
         
-        const result = await login(formData)
+        try {
+        const result = await login(formData.email, formData.password)
         if (result.success) {
-        toast.success('Login successful!')
+            toast.success('Вход выполнен успешно!')
+            navigate('/')
         } else {
-        toast.error(result.error)
+            toast.error(result.error)
+        }
+        } catch (error) {
+        toast.error('Ошибка входа')
+        } finally {
+        setLoading(false)
         }
     }
 
     return (
-        <div className="min-h-screen flex items-center justify-center py-12 px-6">
+        <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6">
         <div className="max-w-md w-full">
-            <div className="border border-black p-12">
-            <h2 className="text-2xl font-normal text-center mb-12 tracking-wide">LOGIN</h2>
+            <div className="border border-black p-8 sm:p-12">
+            <h2 className="text-2xl font-normal text-center mb-8 sm:mb-12 tracking-wide">ВХОД</h2>
             
-            <form className="space-y-8" onSubmit={handleSubmit}>
+            <form className="space-y-6 sm:space-y-8" onSubmit={handleSubmit}>
                 <div>
                 <label className="block text-sm mb-3 tracking-wider uppercase">Email</label>
                 <input
@@ -49,7 +59,7 @@
                 </div>
 
                 <div>
-                <label className="block text-sm mb-3 tracking-wider uppercase">Password</label>
+                <label className="block text-sm mb-3 tracking-wider uppercase">Пароль</label>
                 <input
                     type="password"
                     name="password"
@@ -63,18 +73,19 @@
 
                 <button 
                 type="submit"
-                className="vogue-button w-full py-4 text-sm tracking-widest uppercase"
+                disabled={loading}
+                className="vogue-button w-full py-4 text-sm tracking-widest uppercase disabled:opacity-50"
                 >
-                Login
+                {loading ? 'Вход...' : 'Войти'}
                 </button>
 
                 <p className="text-center text-sm tracking-wide">
-                Don't have an account?{' '}
+                Нет аккаунта?{' '}
                 <NavLink 
                     to="/register" 
                     className="underline hover:no-underline"
                 >
-                    Register here
+                    Зарегистрируйтесь здесь
                 </NavLink>
                 </p>
             </form>

@@ -1,49 +1,144 @@
-import { create } from 'zustand'
-import { authAPI } from '../api'
+    import { create } from 'zustand'
+    import { login, register, getProducts, getProductById } from '../api'
 
-const useStore = create((set, get) => ({
+    const useStore = create((set, get) => ({
     user: JSON.parse(localStorage.getItem('user')) || null,
-    isAuthenticated: !!localStorage.getItem('accessToken'),
+    isAuthenticated: !!localStorage.getItem('user'),
     products: [],
     product: null,
     cart: JSON.parse(localStorage.getItem('cart')) || [],
     
-    login: async (credentials) => {
-    const response = await authAPI.login(credentials)
-    const { accessToken, user } = response.data
-    
-    localStorage.setItem('accessToken', accessToken)
-    localStorage.setItem('user', JSON.stringify(user))
-    
-    set({ user, isAuthenticated: true })
-    return { success: true }
+    // Новый метод логина под новый API
+    login: async (email, password) => {
+        try {
+        const response = await login(email, password)
+        const data = await response.json()
+        
+        if (data.success) {
+            const user = {
+            id: data.data.id,
+            name: data.data.name,
+            email: data.data.email,
+            created_at: data.data.created_at
+            }
+            
+            localStorage.setItem('user', JSON.stringify(user))
+            set({ user, isAuthenticated: true })
+            return { success: true }
+        } else {
+            return { success: false, error: data.error }
+        }
+        } catch (error) {
+        console.error('Login error:', error)
+        return { success: false, error: 'Login failed' }
+        }
     },
     
-    register: async (userData) => {
-        const response = await authAPI.register(userData)
-        return { success: true, data: response.data }
+    // Новый метод регистрации под новый API
+    register: async (name, email, password) => {
+        try {
+        const response = await register(name, email, password)
+        const data = await response.json()
+        
+        if (data.success) {
+            return { success: true, data: data.data }
+        } else {
+            return { success: false, error: data.error }
+        }
+        } catch (error) {
+        console.error('Registration error:', error)
+        return { success: false, error: 'Registration failed' }
+        }
     },
     
     logout: () => {
-        localStorage.removeItem('accessToken')
         localStorage.removeItem('user')
         localStorage.removeItem('cart')
         set({ user: null, isAuthenticated: false, cart: [] })
     },
     
+    // Загрузка товаров
+    loadProducts: async () => {
+        try {
+        const response = await getProducts()
+        const data = await response.json()
+        
+        if (data.success) {
+            // Адаптируем структуру товаров под фронтенд
+            const adaptedProducts = data.data.map(product => ({
+            id: product.id,
+            title: product.name, // name -> title для совместимости
+            name: product.name,
+            price: product.price,
+            description: product.description,
+            image_url: product.image_url,
+            category: product.category,
+            stock: 10, // Временное значение, пока нет в API
+            brand: product.category, // Временное значение
+            color: 'Various', // Временное значение
+            sizes: 'S,M,L,XL', // Временное значение
+            created_at: product.created_at
+            }))
+            
+            set({ products: adaptedProducts })
+            return { success: true, products: adaptedProducts }
+        } else {
+            return { success: false, error: data.error }
+        }
+        } catch (error) {
+        console.error('Load products error:', error)
+        return { success: false, error: 'Failed to load products' }
+        }
+    },
+    
+    // Загрузка конкретного товара
+    loadProduct: async (id) => {
+        try {
+        const response = await getProductById(id)
+        const data = await response.json()
+        
+        if (data.success) {
+            // Адаптируем структуру товара
+            const adaptedProduct = {
+            id: data.data.id,
+            title: data.data.name,
+            name: data.data.name,
+            price: data.data.price,
+            description: data.data.description,
+            image_url: data.data.image_url,
+            category: data.data.category,
+            stock: 10, // Временное значение
+            brand: data.data.category,
+            color: 'Various',
+            sizes: 'S,M,L,XL',
+            created_at: data.data.created_at
+            }
+            
+            set({ product: adaptedProduct })
+            return { success: true, product: adaptedProduct }
+        } else {
+            return { success: false, error: data.error }
+        }
+        } catch (error) {
+        console.error('Load product error:', error)
+        return { success: false, error: 'Failed to load product' }
+        }
+    },
+    
+    // Методы корзины (пока локальные, без бекенда)
     addToCart: (product) => {
         const { cart } = get()
-        const existingItem = cart.find(item => item.id === product.id)
+        const existingItem = cart.find(item => item.id === product.id && item.selectedSize === product.selectedSize)
         
         let newCart
         if (existingItem) {
         newCart = cart.map(item =>
-            item.id === product.id
-            ? { ...item, quantity: item.quantity + 1 }
+            item.id === product.id && item.selectedSize === product.selectedSize
+            ? { ...item, quantity: item.quantity + product.quantity }
             : item
         )
         } else {
-        newCart = [...cart, { ...product, quantity: 1 }]
+        newCart = [...cart, { ...product, quantity: product.quantity || 1 }]
         }
         
         localStorage.setItem('cart', JSON.stringify(newCart))
@@ -75,6 +170,6 @@ const useStore = create((set, get) => ({
     
     setProducts: (products) => set({ products }),
     setProduct: (product) => set({ product }),
-}))
+    }))
 
-export default useStore
+    export default useStore
