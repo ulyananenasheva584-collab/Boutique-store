@@ -1,139 +1,88 @@
-    import { useRef, useEffect } from 'react';
+import { Pie } from 'react-chartjs-2';
+import {
+    Chart as ChartJS,
+    ArcElement,
+    Tooltip,
+    Legend,
+} from 'chart.js';
 
-    export default function PieChart({ data, title, options = {} }) {
-    const canvasRef = useRef(null);
+ChartJS.register(ArcElement, Tooltip, Legend);
 
-    useEffect(() => {
-        if (!canvasRef.current || !data) return;
-
-        const canvas = canvasRef.current;
-        const ctx = canvas.getContext('2d');
-        
-        // Очищаем canvas
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        const width = canvas.width;
-        const height = canvas.height;
-        const centerX = width / 2;
-        const centerY = height / 2;
-        const radius = Math.min(width, height) / 2 - 40;
-
-        if (!data.labels || !data.datasets || data.datasets.length === 0) {
-        ctx.fillStyle = '#666';
-        ctx.font = '14px "Inter", sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('Нет данных для отображения', centerX, centerY);
-        return;
+export default function PieChart({ data, title }) {
+    const options = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom',
+                labels: {
+                    usePointStyle: true,
+                    padding: 20,
+                    font: {
+                        family: 'Inter',
+                        size: 12
+                    }
+                }
+            },
+            tooltip: {
+                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                titleColor: 'white',
+                bodyColor: 'white',
+                borderColor: 'black',
+                borderWidth: 1,
+                callbacks: {
+                    label: function(context) {
+                        const label = context.label || '';
+                        const value = context.parsed;
+                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                        const percentage = Math.round((value / total) * 100);
+                        return `${label}: ${value} (${percentage}%)`;
+                    }
+                }
+            },
+            title: {
+                display: !!title,
+                text: title,
+                font: {
+                    size: 16,
+                    family: 'Inter',
+                    weight: '600'
+                },
+                color: '#000000'
+            }
+        },
+        onClick: (event, elements) => {
+            if (elements.length > 0 && data.onBarClick) {
+                const element = elements[0];
+                const index = element.index;
+                
+                data.onBarClick({
+                    index,
+                    label: data.labels[index],
+                    value: data.datasets[0].data[index],
+                    dataset: data.datasets[0].label
+                });
+            }
+        },
+        onHover: (event, elements) => {
+            event.native.target.style.cursor = elements.length > 0 ? 'pointer' : 'default';
         }
+    };
 
-        const dataset = data.datasets[0];
-        const total = dataset.data.reduce((sum, value) => sum + value, 0);
-        
-        // Черно-белая палитра с градациями
-        const colors = [
-        '#000000', // Чёрный
-        '#333333', // Тёмно-серый
-        '#666666', // Серый
-        '#999999', // Средне-серый
-        '#CCCCCC', // Светло-серый
-        '#E5E5E5', // Очень светлый серый
-        ];
-
-        let startAngle = 0;
-
-        // Рисуем секторы круговой диаграммы
-        dataset.data.forEach((value, index) => {
-        const sliceAngle = (2 * Math.PI * value) / total;
-        const endAngle = startAngle + sliceAngle;
-
-        // Сектор
-        ctx.beginPath();
-        ctx.moveTo(centerX, centerY);
-        ctx.arc(centerX, centerY, radius, startAngle, endAngle);
-        ctx.closePath();
-
-        // Градиент для сектора
-        const gradient = ctx.createLinearGradient(
-            centerX + Math.cos(startAngle) * radius,
-            centerY + Math.sin(startAngle) * radius,
-            centerX + Math.cos(endAngle) * radius,
-            centerY + Math.sin(endAngle) * radius
-        );
-        gradient.addColorStop(0, colors[index % colors.length]);
-        gradient.addColorStop(1, '#555555');
-
-        ctx.fillStyle = gradient;
-        ctx.fill();
-
-        // Обводка сектора
-        ctx.strokeStyle = '#FFFFFF';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-
-        // Подписи снаружи диаграммы
-        const labelAngle = startAngle + sliceAngle / 2;
-        const labelX = centerX + Math.cos(labelAngle) * (radius + 20);
-        const labelY = centerY + Math.sin(labelAngle) * (radius + 20);
-
-        // Линия к подписи
-        ctx.beginPath();
-        ctx.moveTo(centerX + Math.cos(labelAngle) * radius, centerY + Math.sin(labelAngle) * radius);
-        ctx.lineTo(labelX, labelY);
-        ctx.strokeStyle = '#CCCCCC';
-        ctx.lineWidth = 1;
-        ctx.stroke();
-
-        // Текст подписи
-        ctx.fillStyle = '#000000';
-        ctx.font = '500 12px "Inter", sans-serif';
-        ctx.textAlign = Math.cos(labelAngle) > 0 ? 'left' : 'right';
-        
-        const percentage = ((value / total) * 100).toFixed(1);
-        const labelText = `${data.labels[index]} (${percentage}%)`;
-        
-        ctx.fillText(labelText, labelX + (Math.cos(labelAngle) > 0 ? 5 : -5), labelY);
-
-        startAngle = endAngle;
-        });
-
-        // Центральный круг (дырка для пончика) - если указана опция cutout
-        if (options.cutout) {
-        ctx.beginPath();
-        ctx.arc(centerX, centerY, radius * 0.6, 0, 2 * Math.PI);
-        ctx.fillStyle = '#FFFFFF';
-        ctx.fill();
-        
-        // Текст в центре
-        ctx.fillStyle = '#000000';
-        ctx.font = '600 14px "Inter", sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('Всего', centerX, centerY - 10);
-        
-        ctx.fillStyle = '#666666';
-        ctx.font = '500 12px "Inter", sans-serif';
-        ctx.fillText(total.toString(), centerX, centerY + 10);
-        }
-
-        // Заголовок
-        if (title) {
-        ctx.fillStyle = '#000000';
-        ctx.font = '600 16px "Inter", sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'top';
-        ctx.fillText(title, centerX, 20);
-        }
-
-    }, [data, title, options]);
+    const chartData = {
+        labels: data.labels,
+        datasets: data.datasets.map(dataset => ({
+            ...dataset,
+            borderColor: '#ffffff',
+            borderWidth: 2,
+            hoverBorderColor: '#000000',
+            hoverBorderWidth: 3,
+        }))
+    };
 
     return (
-        <div className="w-full h-full bg-white rounded-lg">
-        <canvas 
-            ref={canvasRef}
-            width={500}
-            height={350}
-            className="w-full h-full rounded-lg"
-        />
+        <div className="w-full h-full">
+            <Pie data={chartData} options={options} />
         </div>
     );
-    }
+}

@@ -19,6 +19,22 @@
         loadInitialData()
     }, [])
 
+    // В функции handleAddToCart обновите названия полей:
+function handleAddToCart(product, e) {
+    e.preventDefault()
+    e.stopPropagation()
+    
+    const cartProduct = {
+        ...product,
+        title: product.name || product.title, // Поддержка обоих названий
+        selectedSize: product.sizes ? product.sizes.split(',')[0].trim() : '',
+        quantity: 1
+    }
+    
+    addToCart(cartProduct)
+    toast.success(`${cartProduct.title} добавлен в корзину!`)
+}
+
     async function loadInitialData() {
         try {
         setError('')

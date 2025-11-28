@@ -28,7 +28,7 @@
     <header className="border-b border-white sticky top-0 bg-black z-50">
         <div className="container mx-auto px-4 sm:px-6">
             <div className="flex items-center justify-between h-16">
-            {/* Логотип */}
+
             <NavLink 
                 to="/" 
                 className="text-xl font-normal tracking-widest uppercase hover:opacity-70 transition-opacity text-white"
@@ -37,7 +37,7 @@
                 BOUTIQUE
             </NavLink>
 
-            {/* Десктопная навигация */}
+
             <nav className="hidden md:flex items-center gap-8">
                 {navItems.map((item) => {
                 const Icon = item.icon
@@ -58,9 +58,9 @@
                 })}
             </nav>
 
-            {/* Правая часть - авторизация/корзина */}
+
             <div className="flex items-center gap-4">
-                {/* Корзина */}
+
                 <NavLink
                 to="/cart"
                 className="flex items-center gap-2 text-sm tracking-widest uppercase opacity-60 hover:opacity-100 transition-opacity text-white"
@@ -74,7 +74,7 @@
                 )}
                 </NavLink>
 
-                {/* Авторизация */}
+
                 {isAuthenticated ? (
                 <div className="hidden md:flex items-center gap-4">
                     <span className="text-sm tracking-wide text-white">Привет, {user?.name}</span>
@@ -102,7 +102,7 @@
                 </div>
                 )}
 
-                {/* Мобильное меню */}
+
                 <button
                 className="md:hidden p-2 text-white"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -112,7 +112,6 @@
             </div>
             </div>
 
-            {/* Мобильное меню */}
             {mobileMenuOpen && (
             <div className="md:hidden border-t border-white py-4">
                 <nav className="space-y-4">
@@ -135,7 +134,7 @@
                     )
                 })}
                 
-                {/* Мобильная авторизация */}
+
                 {isAuthenticated ? (
                     <div className="pt-4 border-t border-gray-400 space-y-3">
                     <div className="text-sm tracking-wide px-1 text-white">Hello, {user?.name}</div>
